@@ -1,36 +1,46 @@
 import streamlit as st
-from datetime import datetime
+import gspread
+from google.oauth2.service_account import Credentials
 
-# 애플리케이션 제목
-st.title("학생 결석 사유 입력")
+# Google Sheets API 설정
+SCOPE = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+CREDS = Credentials.from_service_account_file('path_to_your_service_account_key.json', scopes=SCOPE)
 
-# 결석 종류 선택
-absence_type = st.selectbox(
-    "결석 종류를 선택하세요:",
-    ["질병결석", "인정결석", "기타결석"]
-)
+# 스프레드시트 접근
+client = gspread.authorize(CREDS)
+sheet = client.open('오늘의 식단').sheet1  # '오늘의 식단'은 스프레드시트 이름입니다
 
-# 결석 날짜 선택
-absence_date = st.date_input(
-    "결석 날짜를 선택하세요:",
-    value=datetime.today()
-)
+# 앱 제목
+st.title("오늘의 식단 정리")
 
-# 결석 사유 입력
-reason = st.text_area("결석 사유를 서술하세요:")
+# 아침 식단 입력
+st.header("아침")
+breakfast = st.text_input("아침 식단을 입력하세요", "예: 밥, 김치, 달걀")
 
-# 제출 버튼
-if st.button("제출"):
-    if not reason.strip():
-        st.error("결석 사유를 입력해 주세요.")
-    else:
-        # 제출된 정보 출력
-        st.success("결석 사유가 성공적으로 제출되었습니다.")
-        st.write("### 입력된 정보")
-        st.write(f"- **결석 종류**: {absence_type}")
-        st.write(f"- **결석 날짜**: {absence_date.strftime('%Y-%m-%d')}")
-        st.write(f"- **사유**: {reason}")
+# 점심 식단 입력
+st.header("점심")
+lunch = st.text_input("점심 식단을 입력하세요", "예: 비빔밥, 된장국")
 
-# 기존 제출된 정보 보기 (기능 확장을 위한 섹션)
-st.sidebar.title("기존 제출된 정보 보기")
-st.sidebar.info("현재 저장된 데이터는 없음. 나중에 데이터베이스 기능을 추가할 수 있습니다.")
+# 저녁 식단 입력
+st.header("저녁")
+dinner = st.text_input("저녁 식단을 입력하세요", "예: 스테이크, 샐러드")
+
+# 스낵 또는 기타 입력
+st.header("스낵/기타")
+snacks = st.text_input("스낵 또는 기타 간식 입력", "예: 과일, 요거트")
+
+# 입력된 식단 출력
+st.subheader("오늘의 식단")
+st.write("**아침:**", breakfast)
+st.write("**점심:**", lunch)
+st.write("**저녁:**", dinner)
+st.write("**스낵/기타:**", snacks)
+
+# Google Sheets에 데이터 추가
+def add_to_sheet(breakfast, lunch, dinner, snacks):
+    sheet.append_row([breakfast, lunch, dinner, snacks])
+
+# 오늘의 식단을 정리하는 메시지
+if st.button("오늘의 식단 정리"):
+    add_to_sheet(breakfast, lunch, dinner, snacks)
+    st.success("오늘의 식단이 Google 스프레드시트에 저장되었습니다!")
